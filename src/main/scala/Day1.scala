@@ -1,7 +1,5 @@
 import util.Day
 
-import scala.annotation.tailrec
-
 object Day1 extends Day(1):
   override def solve(): Unit =
     val dialPositions = inputLines.scanLeft(50)(turnDial)
