@@ -23,5 +23,3 @@ object Day6 extends Day(6):
       val rest = list.drop(g.length + 1)
 
       partition(rest, groups.appended(g.map(_.mkString)))
-
-
