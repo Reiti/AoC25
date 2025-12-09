@@ -23,7 +23,13 @@ object Day9 extends Day(9):
 
     min <= x && x < max //Turning the left < into a <= did it
 
-  def onEdge(pos: Pos, edge: (Pos, Pos)): Boolean = between(pos.x, edge._1.x, edge._2.x) && between(pos.y, edge._1.y, edge._2.y)
+  def onEdge(pos: Pos, edge: (Pos, Pos)): Boolean =
+    val minX = Math.min(edge._1.x, edge._2.x)
+    val maxX = Math.max(edge._1.x, edge._2.x)
+    val minY = Math.min(edge._1.y, edge._2.y)
+    val maxY = Math.max(edge._1.y, edge._2.y)
+
+    minX <= pos.x && pos.x <= maxX && minY <= pos.y && pos.y <= maxY
 
   def onAnyEdge(pos: Pos, edges: List[(Pos, Pos)]): Boolean = edges.exists(e => onEdge(pos, e))
 
