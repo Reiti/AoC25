@@ -14,7 +14,11 @@ object Day10 extends Day(10):
     val machines = inputLines.map(parseMachines)
 
     //Part 1
-    println(machines.map(findAllOn).sum)
+    //println(machines.map(findAllOn).sum)
+
+    //Part 2
+    machines.map(findJoltage).foreach(println)
+
 
 
   def parseMachines(line: String): Machine =
@@ -41,3 +45,26 @@ object Day10 extends Day(10):
 
   def toggle(lights: List[Boolean], button: Set[Int]): List[Boolean] =
     lights.zipWithIndex.map(l => if button.contains(l._2) then !l._1 else l._1)
+
+  def findLowestToMax(buttons: List[Set[Int]], joltage: List[Int]): (Int, List[Set[Int]]) =
+    val presses = buttons.map(b => findMax(b, joltage)).min
+
+    (presses, buttons.filter(b => findMax(b, joltage) == presses))
+
+  def findMax(button: Set[Int], joltage: List[Int]): Int =
+    LazyList.from(0).takeWhile(f => button.forall(b => f <= joltage(b))).last
+
+  def findJoltage(machine: Machine): Long =
+    def _find(remaining: List[Set[Int]], presses: Long, remainingJoltage: List[Int]): Long =
+      if remaining.isEmpty then
+        if remainingJoltage.forall(_ == 0) then
+          presses
+        else
+          Integer.MAX_VALUE
+      else
+        val (d, min) = findLowestToMax(remaining, remainingJoltage)
+
+        val next = min.map(b => (remaining.filterNot(_ == b), remainingJoltage.zipWithIndex.map(z => if b.contains(z._2) then z._1 - d else z._1)))
+        next.map(n => _find(n._1, presses + d, n._2)).min
+
+    _find(machine.buttons, 0L, machine.joltage)
