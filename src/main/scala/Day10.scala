@@ -1,19 +1,17 @@
 import util.{Day, Util}
 
+import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
+import scala.collection.parallel.CollectionConverters.*
 
 case class Machine(lights: List[Boolean], buttons: List[Set[Int]], joltage: List[Int]);
 
 object Day10 extends Day(10):
   override def solve(): Unit =
-//    val inputLines = """[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
-//                       |[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
-//                       |[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}""".stripMargin.split("\n").map(_.trim).toList
-
     val machines = inputLines.map(parseMachines)
 
     //Part 1
-    //println(machines.map(findAllOn).sum)
+    println(machines.map(findAllOn).sum)
 
     //Part 2
     println(machines.map(findJoltage).sum)
@@ -25,7 +23,6 @@ object Day10 extends Day(10):
     val joltage = split.last.drop(1).init.split(",").map(_.toInt).toList
 
     Machine(lights, buttons, joltage)
-
 
   def findAllOn(machine: Machine): Int =
     @tailrec
@@ -56,31 +53,26 @@ object Day10 extends Day(10):
     current.zip(joltage).forall(z => z._1 <= z._2)
 
   def findJoltage(machine: Machine): Long =
-    var currMin: Int = Integer.MAX_VALUE
+    val currMin: AtomicInteger = new AtomicInteger(Integer.MAX_VALUE)
 
-    println("next")
     def _find(remainingButtons: List[Set[Int]], currentJoltage: List[Int], presses: Int): Long =
-      if presses >= currMin then
-        currMin
+      if presses >= currMin.get() then
+        Integer.MAX_VALUE
       else if currentJoltage == machine.joltage then
-        currMin = presses
-        currMin
+        currMin.updateAndGet(v => if v > presses then presses else v)
+        presses
       else
         val leastButtons = currentJoltage.indices.filter(i => currentJoltage(i) != machine.joltage(i)).minBy(c => remainingButtons.count(b => b.contains(c)))
         val relevantButtons = remainingButtons.filter(b => b.contains(leastButtons))
         val buttonCount = relevantButtons.size
         val missingJoltage = machine.joltage(leastButtons) - currentJoltage(leastButtons)
 
-//        remainingButtons foreach println
-//        println(leastButtons)
-//        println(missingJoltage)
-//        println("---------------")
         if buttonCount == 0 then
           Integer.MAX_VALUE
         else
           val possiblePresses = partitions(buttonCount, missingJoltage)
 
-          possiblePresses.map(p => pressButtons(relevantButtons, p, currentJoltage)).filter(j => isValid(j, machine.joltage)).map(j => _find(remainingButtons.filter(b => !b.contains(leastButtons)), j, presses + missingJoltage)).minOption.getOrElse(Integer.MAX_VALUE)
+          possiblePresses.par.map(p => pressButtons(relevantButtons, p, currentJoltage)).filter(j => isValid(j, machine.joltage)).map(j => _find(remainingButtons.filter(b => !b.contains(leastButtons)), j, presses + missingJoltage)).seq.minOption.getOrElse(Integer.MAX_VALUE)
 
     _find(machine.buttons, List.fill(machine.joltage.length)(0), 0)
 
