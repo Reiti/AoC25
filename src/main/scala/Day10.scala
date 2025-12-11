@@ -1,6 +1,5 @@
-import util.{Day, Util}
+import util.Day
 
-import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 import scala.collection.parallel.CollectionConverters.*
 
@@ -15,7 +14,7 @@ object Day10 extends Day(10):
 
     //Part 2
     println(machines.map(findJoltage).sum)
-
+  
   def parseMachines(line: String): Machine =
     val split = line.split(" ")
     val lights = split.head.drop(1).init.map(c => if c == '#' then true else false).toList
@@ -53,13 +52,8 @@ object Day10 extends Day(10):
     current.zip(joltage).forall(z => z._1 <= z._2)
 
   def findJoltage(machine: Machine): Long =
-    val currMin: AtomicInteger = new AtomicInteger(Integer.MAX_VALUE)
-
     def _find(remainingButtons: List[Set[Int]], currentJoltage: List[Int], presses: Int): Long =
-      if presses >= currMin.get() then
-        Integer.MAX_VALUE
-      else if currentJoltage == machine.joltage then
-        currMin.updateAndGet(v => if v > presses then presses else v)
+      if currentJoltage == machine.joltage then
         presses
       else
         val leastButtons = currentJoltage.indices.filter(i => currentJoltage(i) != machine.joltage(i)).minBy(c => remainingButtons.count(b => b.contains(c)))
